@@ -15,33 +15,23 @@ public class MongoConnection implements InitializingBean {
 
   private MongoDatabase database;
 
-  private MongoClient mongoClient;
-
-  public MongoClient mongoClient() {
-    return mongoClient;
-  }
-
   public MongoDatabase database() {
     return database;
   }
 
   @Override
   public void afterPropertiesSet() {
-    var pojoBuilder = PojoCodecProvider.builder();
-    pojoBuilder.automatic(true);
 
-    var pojoCodecProvider = pojoBuilder.build();
-
-    var codecRegistry = MongoClient.getDefaultCodecRegistry();
-
-    var finishedCodecRegistry = fromRegistries(codecRegistry, fromProviders(pojoCodecProvider));
+    var pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
 
     var mongoClientOptions = MongoClientOptions
       .builder()
-      .codecRegistry(finishedCodecRegistry)
+      .codecRegistry(fromRegistries(MongoClient.getDefaultCodecRegistry(), fromProviders(pojoCodecProvider)))
       .build();
 
-    mongoClient = new MongoClient("localhost:27017", mongoClientOptions);
+    var mongoClient = new MongoClient("localhost:27017", mongoClientOptions);
+
     database = mongoClient.getDatabase("sample");
   }
+
 }

@@ -1,40 +1,51 @@
 package kz.mongo.sample;
 
-import kz.mongo.sample.model.Gender;
-import kz.mongo.sample.model.PersonDto;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import kz.greetgo.util.RND;
+import kz.mongo.sample.model.mongo.ClientDto;
+import kz.mongo.sample.model.web.Client;
 import kz.mongo.sample.mongo.MongoAccess;
 import kz.mongo.sample.util.Ids;
-import kz.mongo.sample.util.MongoUtil;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static com.mongodb.client.model.Filters.eq;
-
 @SpringBootTest
-class MongoSampleApplicationTests {
+public class MongoSampleApplicationTests {
 
   @Autowired
-  private MongoAccess mongoAccess;
+  protected MongoAccess mongoAccess;
 
-  @Test
-  void contextLoads() {
+  protected Client rndClient() {
+    var ret = new Client();
+    ret.id = Ids.generateStr();
+    ret.name = RND.str(7);
+    ret.email = RND.str(8);
+    ret.phone = RND.str(9);
+    return ret;
+  }
 
-    var personDto = new PersonDto();
-    personDto.id = Ids.generate();
-    personDto.name = "Bergen";
-    personDto.gender = Gender.MAN;
+  protected ClientDto rndClientDto() {
+    var ret = new ClientDto();
+    ret.id = Ids.generate();
+    ret.name = RND.str(7);
+    ret.email = RND.str(8);
+    ret.phone = RND.str(9);
+    return ret;
+  }
 
-    //
-    //
-    mongoAccess.person().insertOne(personDto);
-    //
-    //
+  protected void ins(ClientDto... clients) {
+    for (var client : clients) {
+      mongoAccess.clients().insertOne(client);
+    }
+  }
 
-    var person = MongoUtil.one(mongoAccess.person().find(eq("_id", personDto.id))).orElseThrow();
-
-    System.out.println(person);
-
+  @AfterEach
+  protected void clean() {
+    mongoAccess.clients().updateMany(
+      Filters.eq(ClientDto.Fields.isRemoved, false),
+      Updates.set(ClientDto.Fields.isRemoved, true));
   }
 
 }
